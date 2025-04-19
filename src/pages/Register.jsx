@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -13,22 +14,56 @@ function Register() {
     password: "",
     age: "",
     city: "",
-    activity: "running", // or "walking"
+    activity: "running",
   });
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
-    // For now, using localStorage for demonstration
-    localStorage.setItem("user", JSON.stringify(formData));
-    toast({
-      title: "Registro concluído!",
-      description: "Bem-vindo ao RunTogether!",
-    });
-    navigate("/");
+    try {
+      // Register the user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (authError) throw authError;
+
+      // Create the user profile in the users table
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: authData.user.id,
+            email: formData.email,
+            name: formData.name,
+            age: parseInt(formData.age),
+            city: formData.city,
+            activity: formData.activity,
+          }
+        ]);
+
+      if (profileError) throw profileError;
+
+      toast({
+        title: "Registro concluído!",
+        description: "Bem-vindo ao RunTogether! Por favor, verifique seu email.",
+      });
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Erro no registro",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -57,6 +92,7 @@ function Register() {
               value={formData.name}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
           
@@ -68,6 +104,7 @@ function Register() {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
           
@@ -79,6 +116,7 @@ function Register() {
               value={formData.password}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
           
@@ -90,6 +128,7 @@ function Register() {
               value={formData.age}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
           
@@ -100,6 +139,7 @@ function Register() {
               value={formData.city}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
           
@@ -109,6 +149,7 @@ function Register() {
               variant={formData.activity === "running" ? "default" : "outline"}
               className="flex-1"
               onClick={() => setFormData({ ...formData, activity: "running" })}
+              disabled={loading}
             >
               Corrida
             </Button>
@@ -117,13 +158,18 @@ function Register() {
               variant={formData.activity === "walking" ? "default" : "outline"}
               className="flex-1"
               onClick={() => setFormData({ ...formData, activity: "walking" })}
+              disabled={loading}
             >
               Caminhada
             </Button>
           </div>
           
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-            Criar Conta
+          <Button 
+            type="submit" 
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            disabled={loading}
+          >
+            {loading ? "Criando conta..." : "Criar Conta"}
           </Button>
         </form>
         

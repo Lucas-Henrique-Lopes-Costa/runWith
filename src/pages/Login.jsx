@@ -5,24 +5,56 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
     
-    // For now, using localStorage for demonstration
-    if (email && password) {
-      localStorage.setItem("user", JSON.stringify({ email }));
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
       toast({
         title: "Login bem-sucedido!",
         description: "Bem-vindo de volta!",
       });
       navigate("/");
+    } catch (error) {
+      toast({
+        title: "Erro no login",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialLogin = async (provider) => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      toast({
+        title: "Erro no login",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -44,6 +76,7 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full"
+              disabled={loading}
             />
           </div>
           <div>
@@ -53,10 +86,15 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full"
+              disabled={loading}
             />
           </div>
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-            Entrar
+          <Button 
+            type="submit" 
+            className="w-full bg-blue-600 hover:bg-blue-700"
+            disabled={loading}
+          >
+            {loading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
         
@@ -85,30 +123,24 @@ function Login() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => toast({
-                title: "Em breve!",
-                description: "Login com Google estará disponível em breve.",
-              })}
+              onClick={() => handleSocialLogin('google')}
+              disabled={loading}
             >
               Google
             </Button>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => toast({
-                title: "Em breve!",
-                description: "Login com Facebook estará disponível em breve.",
-              })}
+              onClick={() => handleSocialLogin('facebook')}
+              disabled={loading}
             >
               Facebook
             </Button>
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => toast({
-                title: "Em breve!",
-                description: "Login com Apple estará disponível em breve.",
-              })}
+              onClick={() => handleSocialLogin('apple')}
+              disabled={loading}
             >
               Apple
             </Button>
