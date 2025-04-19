@@ -72,14 +72,6 @@ function Map() {
   }, [currentUser]);
 
   useEffect(() => {
-    // Subscribe to active users
-    const subscription = supabase
-      .from('active_runs')
-      .on('*', payload => {
-        fetchActiveUsers();
-      })
-      .subscribe();
-
     const fetchActiveUsers = async () => {
       const { data: activeRuns } = await supabase
         .from('active_runs')
@@ -98,10 +90,27 @@ function Map() {
       setActiveUsers(activeRuns || []);
     };
 
+    // Initial fetch
     fetchActiveUsers();
 
+    // Set up real-time subscription using channel
+    const channel = supabase
+      .channel('active_runs_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'active_runs'
+        },
+        (payload) => {
+          fetchActiveUsers();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeSubscription(subscription);
+      supabase.removeChannel(channel);
     };
   }, []);
 

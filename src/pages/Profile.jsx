@@ -7,13 +7,14 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/lib/supabase";
 import { motion } from "framer-motion";
-import { Camera, Save, User } from "lucide-react";
+import { Camera, Save, User, Clock, MapPin } from "lucide-react";
 
 function Profile() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [runs, setRuns] = useState([]);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -23,6 +24,7 @@ function Profile() {
 
   useEffect(() => {
     fetchProfile();
+    fetchRuns();
   }, []);
 
   const fetchProfile = async () => {
@@ -53,6 +55,45 @@ function Profile() {
     }
   };
 
+  const fetchRuns = async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        const { data: userRuns } = await supabase
+          .from('runs')
+          .select('*')
+          .eq('user_id', authUser.id)
+          .order('created_at', { ascending: false });
+
+        setRuns(userRuns || []);
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar corridas",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const formatTime = (seconds) => {
+    if (!seconds) return "00:00:00";
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   const handleAvatarUpload = async (event) => {
     try {
       const file = event.target.files?.[0];
@@ -62,19 +103,16 @@ function Profile() {
       const fileName = `${user.id}-${Math.random()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Update user profile
       const { error: updateError } = await supabase
         .from('users')
         .update({ avatar_url: publicUrl })
@@ -244,7 +282,7 @@ function Profile() {
             className="bg-white rounded-xl shadow p-4 text-center"
           >
             <p className="text-gray-500 text-sm">Distância Total</p>
-            <p className="text-2xl font-bold">{user?.total_distance || 0} km</p>
+            <p className="text-2xl font-bold">{(user?.total_distance || 0).toFixed(1)} km</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -253,9 +291,43 @@ function Profile() {
             className="bg-white rounded-xl shadow p-4 text-center"
           >
             <p className="text-gray-500 text-sm">Tempo Total</p>
-            <p className="text-2xl font-bold">{user?.total_time || "00:00"}</p>
+            <p className="text-2xl font-bold">{formatTime(user?.total_time)}</p>
           </motion.div>
         </div>
+
+        {/* Run History */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-xl shadow-lg p-6"
+        >
+          <h3 className="text-xl font-bold mb-4">Histórico de Corridas</h3>
+          <div className="space-y-4">
+            {runs.length === 0 ? (
+              <p className="text-center text-gray-500">Nenhuma corrida registrada ainda</p>
+            ) : (
+              runs.map((run) => (
+                <div
+                  key={run.id}
+                  className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4 text-gray-500" />
+                      <span className="font-medium">{formatTime(run.duration)}</span>
+                    </div>
+                    <span className="text-sm text-gray-500">{formatDate(run.created_at)}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 mt-2">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <span>{(run.distance / 1000).toFixed(2)} km</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </motion.div>
 
         {/* Action Buttons */}
         <div className="space-y-4">
