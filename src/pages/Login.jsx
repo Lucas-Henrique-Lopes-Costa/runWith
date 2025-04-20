@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -65,7 +66,7 @@ function Login() {
         className="w-full max-w-md bg-white rounded-xl shadow-xl p-8"
       >
         <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
-          Bem-vindo ao RunWith
+          Bem-vindo ao RunTogether
         </h2>
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
@@ -88,15 +89,15 @@ function Login() {
               disabled={loading}
             />
           </div>
-          <Button
-            type="submit"
+          <Button 
+            type="submit" 
             className="w-full bg-blue-600 hover:bg-blue-700"
             disabled={loading}
           >
             {loading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
-
+        
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Não tem uma conta?{" "}
@@ -122,7 +123,7 @@ function Login() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleSocialLogin("google")}
+              onClick={() => handleSocialLogin('google')}
               disabled={loading}
             >
               Google
@@ -130,7 +131,7 @@ function Login() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleSocialLogin("facebook")}
+              onClick={() => handleSocialLogin('facebook')}
               disabled={loading}
             >
               Facebook
@@ -138,7 +139,7 @@ function Login() {
             <Button
               variant="outline"
               className="w-full"
-              onClick={() => handleSocialLogin("apple")}
+              onClick={() => handleSocialLogin('apple')}
               disabled={loading}
             >
               Apple

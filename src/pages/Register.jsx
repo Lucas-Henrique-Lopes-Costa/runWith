@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+    
     try {
       // Register the user with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -34,22 +35,24 @@ function Register() {
       if (authError) throw authError;
 
       // Create the user profile in the users table
-      const { error: profileError } = await supabase.from("users").insert([
-        {
-          id: authData.user.id,
-          email: formData.email,
-          name: formData.name,
-          age: parseInt(formData.age),
-          city: formData.city,
-          activity: formData.activity,
-        },
-      ]);
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: authData.user.id,
+            email: formData.email,
+            name: formData.name,
+            age: parseInt(formData.age),
+            city: formData.city,
+            activity: formData.activity,
+          }
+        ]);
 
       if (profileError) throw profileError;
 
       toast({
         title: "Registro concluído!",
-        description: "Bem-vindo ao RunWith! Por favor, verifique seu email.",
+        description: "Bem-vindo ao RunTogether! Por favor, verifique seu email.",
       });
       navigate("/");
     } catch (error) {
@@ -80,7 +83,7 @@ function Register() {
         <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
           Criar Conta
         </h2>
-
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Input
@@ -92,7 +95,7 @@ function Register() {
               disabled={loading}
             />
           </div>
-
+          
           <div>
             <Input
               name="email"
@@ -104,7 +107,7 @@ function Register() {
               disabled={loading}
             />
           </div>
-
+          
           <div>
             <Input
               name="password"
@@ -116,7 +119,7 @@ function Register() {
               disabled={loading}
             />
           </div>
-
+          
           <div>
             <Input
               name="age"
@@ -128,7 +131,7 @@ function Register() {
               disabled={loading}
             />
           </div>
-
+          
           <div>
             <Input
               name="city"
@@ -139,7 +142,7 @@ function Register() {
               disabled={loading}
             />
           </div>
-
+          
           <div className="flex gap-4">
             <Button
               type="button"
@@ -160,16 +163,16 @@ function Register() {
               Caminhada
             </Button>
           </div>
-
-          <Button
-            type="submit"
+          
+          <Button 
+            type="submit" 
             className="w-full bg-blue-600 hover:bg-blue-700"
             disabled={loading}
           >
             {loading ? "Criando conta..." : "Criar Conta"}
           </Button>
         </form>
-
+        
         <div className="mt-6 text-center">
           <p className="text-gray-600">
             Já tem uma conta?{" "}
