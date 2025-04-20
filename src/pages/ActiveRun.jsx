@@ -175,7 +175,7 @@ function ActiveRun() {
         )}
       </div>
 
-      <div className="bg-white p-6 shadow-lg">
+      <div className="bg-white p-6 shadow-lg safe-area-bottom">
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="text-center">
             <p className="text-sm text-gray-500">Tempo</p>
